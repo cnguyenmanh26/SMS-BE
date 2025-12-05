@@ -47,14 +47,17 @@ public class HmacAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        log.info("🔍 HMAC Filter triggered - enabled: {}, path: {}", hmacAuthEnabled, request.getRequestURI());
+
         // Skip if HMAC auth is disabled
         if (!hmacAuthEnabled) {
+            log.info("⏭️ HMAC disabled, skipping filter");
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Wrap request to allow reading body multiple times
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+        // Wrap request to allow reading body multiple times (with 1MB cache limit)
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, 1024 * 1024);
 
         try {
             String appId = wrappedRequest.getHeader(HEADER_APP_ID);
