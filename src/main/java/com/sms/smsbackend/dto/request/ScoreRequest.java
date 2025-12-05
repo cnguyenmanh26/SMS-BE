@@ -28,9 +28,11 @@ public class ScoreRequest {
     @DecimalMax(value = "10.0", message = "Điểm thành phần phải từ 0 đến 10")
     private Double componentScore;
 
+    @NotBlank(message = "Học kỳ không được để trống")
     @Size(max = 20, message = "Học kỳ không được vượt quá 20 ký tự")
     private String semester;
 
+    @NotBlank(message = "Năm học không được để trống")
     @Size(max = 20, message = "Năm học không được vượt quá 20 ký tự")
     private String academicYear;
 }

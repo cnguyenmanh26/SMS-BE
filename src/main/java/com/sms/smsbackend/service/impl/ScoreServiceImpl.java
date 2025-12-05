@@ -38,12 +38,14 @@ public class ScoreServiceImpl implements ScoreService {
         Subject subject = subjectRepository.findById(request.getSubjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Môn học", "id", request.getSubjectId()));
 
-        // Check if score already exists
-        if (studentSubjectRepository.existsByStudentStudentCodeAndSubjectId(
-                request.getStudentCode(), request.getSubjectId())) {
+        // Check if score already exists for this semester and academic year
+        if (studentSubjectRepository.existsByStudentStudentCodeAndSubjectIdAndSemesterAndAcademicYear(
+                request.getStudentCode(), request.getSubjectId(),
+                request.getSemester(), request.getAcademicYear())) {
             throw new DuplicateResourceException(
-                    String.format("Điểm của sinh viên %s cho môn %s đã tồn tại", 
-                            request.getStudentCode(), subject.getSubjectName()));
+                    String.format("Điểm của sinh viên %s cho môn %s trong %s năm học %s đã tồn tại", 
+                            request.getStudentCode(), subject.getSubjectName(),
+                            request.getSemester(), request.getAcademicYear()));
         }
 
         // Validate score ranges
@@ -217,12 +219,14 @@ public class ScoreServiceImpl implements ScoreService {
         Subject subject = subjectRepository.findById(request.getSubjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Môn học", "id", request.getSubjectId()));
 
-        // Check if already registered
-        if (studentSubjectRepository.existsByStudentStudentCodeAndSubjectId(
-                request.getStudentCode(), request.getSubjectId())) {
+        // Check if already registered in the same semester and academic year
+        if (studentSubjectRepository.existsByStudentStudentCodeAndSubjectIdAndSemesterAndAcademicYear(
+                request.getStudentCode(), request.getSubjectId(), 
+                request.getSemester(), request.getAcademicYear())) {
             throw new DuplicateResourceException(
-                    String.format("Sinh viên %s đã đăng ký môn %s", 
-                            request.getStudentCode(), subject.getSubjectName()));
+                    String.format("Sinh viên %s đã đăng ký môn %s trong %s năm học %s", 
+                            request.getStudentCode(), subject.getSubjectName(),
+                            request.getSemester(), request.getAcademicYear()));
         }
 
         StudentSubject studentSubject = StudentSubject.builder()

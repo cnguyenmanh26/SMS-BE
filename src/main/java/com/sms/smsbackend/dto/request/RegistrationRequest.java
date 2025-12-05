@@ -20,9 +20,11 @@ public class RegistrationRequest {
     @NotNull(message = "ID môn học không được để trống")
     private Long subjectId;
 
+    @NotBlank(message = "Học kỳ không được để trống")
     @Size(max = 20, message = "Học kỳ không được vượt quá 20 ký tự")
     private String semester;
 
+    @NotBlank(message = "Năm học không được để trống")
     @Size(max = 20, message = "Năm học không được vượt quá 20 ký tự")
     private String academicYear;
 }

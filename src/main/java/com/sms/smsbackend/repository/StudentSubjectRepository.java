@@ -39,6 +39,14 @@ public interface StudentSubjectRepository extends JpaRepository<StudentSubject, 
     
     boolean existsByStudentStudentCodeAndSubjectId(String studentCode, Long subjectId);
     
+    // New methods for retake support - include semester and academic year
+    boolean existsByStudentStudentCodeAndSubjectIdAndSemesterAndAcademicYear(
+            String studentCode, Long subjectId, String semester, String academicYear);
+    
+    Optional<StudentSubject> findByStudentStudentCodeAndSubjectIdAndSemesterAndAcademicYear(
+            String studentCode, Long subjectId, String semester, String academicYear);
+
+    
     @Query("SELECT DISTINCT ss FROM StudentSubject ss " +
            "LEFT JOIN FETCH ss.student " +
            "LEFT JOIN FETCH ss.subject " +

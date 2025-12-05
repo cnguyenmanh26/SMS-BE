@@ -1,18 +1,25 @@
 package com.sms.smsbackend.config;
 
+import com.sms.smsbackend.entity.Role;
 import com.sms.smsbackend.entity.Student;
 import com.sms.smsbackend.entity.StudentSubject;
 import com.sms.smsbackend.entity.Subject;
+import com.sms.smsbackend.entity.User;
+import com.sms.smsbackend.repository.RoleRepository;
 import com.sms.smsbackend.repository.StudentRepository;
 import com.sms.smsbackend.repository.StudentSubjectRepository;
 import com.sms.smsbackend.repository.SubjectRepository;
+import com.sms.smsbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
@@ -23,12 +30,49 @@ public class DataInitializer {
     CommandLineRunner initDatabase(
             StudentRepository studentRepository,
             SubjectRepository subjectRepository,
-            StudentSubjectRepository studentSubjectRepository) {
+            StudentSubjectRepository studentSubjectRepository,
+            RoleRepository roleRepository,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
         
         return args -> {
-            // Check if data already exists
+            // Initialize roles first
+            createRoleIfNotExists(roleRepository, "ROLE_ADMIN");
+            createRoleIfNotExists(roleRepository, "ROLE_USER");
+
+            // Create default admin user if not exists
+            if (!userRepository.existsByUsername("admin")) {
+                Role adminRole = roleRepository.findByName("ROLE_ADMIN")
+                        .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
+
+                User admin = User.builder()
+                        .username("admin")
+                        .email("admin@sms.com")
+                        .password(passwordEncoder.encode("admin123"))
+                        .enabled(true)
+                        .roles(Set.of(adminRole))
+                        .build();
+
+                userRepository.save(admin);
+                log.info("✅ Default admin user created: username=admin, password=admin123");
+            }
+
+            // Get USER role for student accounts
+            Role userRole = roleRepository.findByName("ROLE_USER")
+                    .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+
+            // Create USER accounts for existing students if they don't have accounts yet
+            List<Student> existingStudents = studentRepository.findAll();
+            if (!existingStudents.isEmpty()) {
+                for (Student student : existingStudents) {
+                    createUserForStudent(userRepository, passwordEncoder, userRole, student);
+                }
+                log.info("✅ Checked and created USER accounts for {} existing students", existingStudents.size());
+            }
+
+            // Check if sample data already exists
             if (studentRepository.count() > 0) {
-                log.info("Database already initialized");
+                log.info("Sample data already initialized");
                 return;
             }
 
@@ -102,6 +146,9 @@ public class DataInitializer {
             studentRepository.save(sv005);
 
             log.info("Created 5 students");
+
+            // User accounts will be created on next restart by the logic above
+            // (checking existing students and creating accounts)
 
             // Create subjects
             Subject math101 = Subject.builder()
@@ -214,5 +261,35 @@ public class DataInitializer {
                 .academicYear(academicYear)
                 .build();
         repository.save(ss);
+    }
+
+    private void createRoleIfNotExists(RoleRepository roleRepository, String roleName) {
+        if (roleRepository.findByName(roleName).isEmpty()) {
+            Role role = Role.builder()
+                    .name(roleName)
+                    .build();
+            roleRepository.save(role);
+            log.info("✅ Role created: {}", roleName);
+        }
+    }
+
+    private void createUserForStudent(UserRepository userRepository, PasswordEncoder passwordEncoder, 
+                                     Role userRole, Student student) {
+        String username = student.getStudentCode();
+        String password = student.getStudentCode().toLowerCase(); // sv001, sv002, etc.
+        
+        if (!userRepository.existsByUsername(username)) {
+            User user = User.builder()
+                    .username(username)
+                    .email(student.getEmail())
+                    .password(passwordEncoder.encode(password))
+                    .studentCode(student.getStudentCode())
+                    .enabled(true)
+                    .roles(Set.of(userRole))
+                    .build();
+            
+            userRepository.save(user);
+            log.info("✅ Created USER account: username={}, password={}", username, password);
+        }
     }
 }

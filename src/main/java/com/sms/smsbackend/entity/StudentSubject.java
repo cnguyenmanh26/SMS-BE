@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "student_subjects", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"student_code", "subject_id"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"student_code", "subject_id", "semester", "academic_year"}))
 @Data
 @Builder
 @NoArgsConstructor
@@ -41,10 +41,10 @@ public class StudentSubject {
     @Column(name = "status", length = 20)
     private String status; // ĐẠT hoặc TRƯỢT
 
-    @Column(name = "semester", length = 20)
+    @Column(name = "semester", length = 20, nullable = false)
     private String semester; // Học kỳ
 
-    @Column(name = "academic_year", length = 20)
+    @Column(name = "academic_year", length = 20, nullable = false)
     private String academicYear; // Năm học
 
     @Column(name = "created_at", updatable = false)
